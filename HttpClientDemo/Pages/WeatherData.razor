@@ -73,15 +73,14 @@
 
 
 @code {
-    WeatherForecastModel forecast;
-    List<LocationModel> locations;
-    string errorString;
-    LocationModel selectedLocation;
+    WeatherForecastModel forecast; // the weather data forecast, displayed in the table
+    List<LocationModel> locations; // locations around the click on the map, present in weather api database
+    string errorString; // message to be displayed in case of error
+    LocationModel selectedLocation; // on dbl click on a map location - this will be selected and weather data displayed
 
-    int zoom = 5;
+    int zoom = 5; // initial zoom of the map
 
-    Dictionary<DateTime, string> events = new Dictionary<DateTime, string>();
-
+    // initialize data, locations, center map
     protected override async Task OnInitializedAsync()
     {
 
@@ -93,7 +92,7 @@
         selectedLocation._long = 18.9902195;
         await FillForecast(selectedLocation.woeid.ToString());
     }
-
+    // main function to get forecast data for a location (being represented by woeid of the forecast api locations)
     async Task FillForecast(string location)
     {
         var client = _clientFactory.CreateClient("meta");
@@ -109,7 +108,7 @@
             errorString = $"There was an error getting our forecast: { ex.Message }";
         }
     }
-
+    // function to get list of locations around the click on the map.
     async Task GetLocations(double lat, double lng)
     {
         var client = _clientFactory.CreateClient("meta");
@@ -131,23 +130,18 @@
         }
 
     }
-
+    // when click is executed on the map, the list of locations is loaded, and will be displayed on the map
     async Task MapClick(GoogleMapClickEventArgs args)
     {
-        //events.Add(DateTime.Now, $"Map clicked at Lat: {args.Position.Lat}, Lng: {args.Position.Lng}");
         await GetLocations(args.Position.Lat, args.Position.Lng);
         StateHasChanged();
     }
-
+    // the markers - red bullets on the map - can be clicked on - and their respective locations' forecast displayed
     async Task MarkerClick(RadzenGoogleMapMarker marker)
     {
-
         Console.WriteLine(DateTime.Now.ToString() +
             $"Map {marker.Title} marker clicked. Marker position -> Lat: {marker.Position.Lat}, Lng: {marker.Position.Lng}");
-        selectedLocation = locations.First(x=> x.title== marker.Label);
-
-        //await FillForecast(marker.Title);
-        //await GetLocations(marker.Position.Lat, marker.Position.Lng);
+        selectedLocation = locations.First(x=> x.title == marker.Label);
 
         await Task.WhenAll(FillForecast(marker.Title), GetLocations(marker.Position.Lat, marker.Position.Lng));
 
